@@ -1,0 +1,40 @@
+import copy
+
+import networkx as nx
+
+from database.DAO import DAO
+
+
+class Model:
+    def __init__(self):
+        self._grafo = nx.Graph()
+
+    def buildGraph(self,x):
+        data = DAO.get_flights_data()
+
+        # Aggiungi i nodi
+        for aeroporto_1, aeroporto_2, num_voli, num_compagnie_1, num_compagnie_2 in data:
+            if num_compagnie_1 >= x:
+                self._grafo.add_node(aeroporto_1)
+            if num_compagnie_2 >= x:
+                self._grafo.add_node(aeroporto_2)
+
+        # Aggiungi gli archi
+        for aeroporto_1, aeroporto_2, num_voli, num_compagnie_1, num_compagnie_2 in data:
+            if aeroporto_1 in self._grafo and aeroporto_2 in self._grafo:
+                if aeroporto_1 != aeroporto_2:
+                    self._grafo.add_edge(aeroporto_1, aeroporto_2, weight=num_voli)
+
+    def getSortedVicini(self, v0):
+        vicini = self._grafo.neighbors(v0)
+        vicini_tuple = []
+        for v in vicini:
+            vicini_tuple.append((v, self._grafo[v0][v]['weight']))
+
+        vicini_tuple.sort(key=lambda x:x[1], reverse = True)
+        return vicini_tuple
+
+    def getDetails(self):
+        return self._grafo.number_of_nodes(), self._grafo.number_of_edges()
+
+
