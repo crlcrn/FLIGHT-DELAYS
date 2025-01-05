@@ -1,0 +1,57 @@
+from database.DB_connect import DBConnect
+from model.airport import Airport
+from model.connessione import Connessione
+
+
+class DAO():
+
+    @staticmethod
+    def getAllAirports():
+        conn = DBConnect.get_connection()
+
+        result = []
+
+        cursor = conn.cursor(dictionary=True)
+        query = """SELECT * from airports a order by a.AIRPORT asc"""
+
+        cursor.execute(query)
+
+        for row in cursor:
+            result.append(Airport(**row))
+
+        cursor.close()
+        conn.close()
+        return result
+
+
+    @staticmethod
+    def get_flights_data():
+        conn = DBConnect.get_connection()
+
+        result = []
+
+        cursor = conn.cursor(dictionary=True)
+        query = """ SELECT 
+            f.ORIGIN_AIRPORT_ID AS aeroporto_1,
+            f.DESTINATION_AIRPORT_ID AS aeroporto_2,
+            COUNT(f.ID) AS num_voli,
+            COUNT(DISTINCT a1.ID) AS num_compagnie_aeroporto_1,
+            COUNT(DISTINCT a2.ID) AS num_compagnie_aeroporto_2
+        FROM 
+            flights f, airlines a1, airlines a2
+        WHERE 
+            a1.ID = f.AIRLINE_ID AND 
+            a2.ID = f.AIRLINE_ID
+        GROUP BY 
+            f.ORIGIN_AIRPORT_ID, f.DESTINATION_AIRPORT_ID"""
+
+        cursor.execute(query)
+
+        for row in cursor:
+            result.append((row['aeroporto_1'], row['aeroporto_2'], row['num_voli'], row['num_compagnie_aeroporto_1'], row['num_compagnie_aeroporto_2']))
+
+        cursor.close()
+        conn.close()
+        return result
+
+
